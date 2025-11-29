@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activity Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.21.5/dist/pocketbase.umd.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #d8d8d8;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+
+        .navbar {
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .navbar h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: #222;
+        }
+
+        .navbar .subtitle {
+            font-size: 0.9rem;
+            color: #666;
+            margin: 0;
+        }
+
+        .navbar-right {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .user-badge {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px 20px 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid #e0e0e0;
+        }
+
+        h1 {
+            color: #222;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d0d0d0;
+            border-radius: 4px;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #888;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        button {
+            background: #333;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 1rem;
+        }
+
+        button:hover {
+            background: #222;
+        }
+
+        button.secondary {
+            background: white;
+            color: #333;
+            border: 1px solid #d0d0d0;
+        }
+
+        button.secondary:hover {
+            background: #f5f5f5;
+        }
+
+        button.danger {
+            background: #666;
+            color: white;
+        }
+
+        button.danger:hover {
+            background: #555;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .date-range {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: flex-end;
+        }
+
+        .date-range .form-group {
+            margin-bottom: 0;
+            flex: 1;
+        }
+
+        .activities-list {
+            margin-top: 20px;
+        }
+
+        .activity-item {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            border-left: 3px solid #333;
+        }
+
+        .activity-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 10px;
+        }
+
+        .activity-date {
+            color: #333;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .activity-stats {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        .activity-comments {
+            color: #666;
+            line-height: 1.6;
+            margin-top: 8px;
+            font-size: 1rem;
+        }
+
+        .activity-actions {
+            margin-top: 10px;
+        }
+
+        .activity-actions button {
+            margin-right: 10px;
+            padding: 8px 16px;
+            font-size: 1rem;
+        }
+
+        .totals-box {
+            background: #e8e8e8;
+            padding: 20px;
+            border-radius: 4px;
+            margin-top: 20px;
+            border-left: 3px solid #555;
+        }
+
+        .totals-box h3 {
+            color: #333;
+            margin-bottom: 12px;
+            font-size: 1.1rem;
+        }
+
+        .totals-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .total-item {
+            text-align: center;
+        }
+
+        .total-label {
+            color: #666;
+            font-size: 1rem;
+            margin-bottom: 5px;
+        }
+
+        .total-value {
+            color: #222;
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .error {
+            background: #f5f5f5;
+            color: #333;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border-left: 3px solid #666;
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 10px 15px;
+            }
+
+            .navbar h1 {
+                font-size: 1.2rem;
+            }
+
+            .navbar .subtitle {
+                font-size: 0.8rem;
+            }
+
+            .container {
+                padding: 0 10px 10px 10px;
+            }
+
+            .card {
+                padding: 15px;
+            }
+
+            .date-range {
+                flex-direction: column;
+                gap: 10px;
+                align-items: stretch;
+            }
+
+            .date-range .form-group {
+                width: 100%;
+            }
+
+            .totals-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .total-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                text-align: left;
+            }
+
+            .total-item .total-label {
+                text-align: left;
+            }
+
+            .total-item .total-value {
+                font-size: 1.1rem;
+                text-align: right;
+            }
+
+            .activity-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <div class="navbar">
+        <div>
+            <h1>Activities</h1>
+            <p class="subtitle">Track your biking, running, walking, and more</p>
+        </div>
+        <div class="navbar-right">
+            <!-- Logged out state -->
+            <div id="navLoggedOut">
+                <button onclick="showLoginModal()">Login</button>
+            </div>
+            <!-- Logged in state -->
+            <div id="navLoggedIn" class="hidden">
+                <span class="user-badge">👤 <span id="navUserEmail"></span></span>
+                <button class="danger" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Auth Modal (shown when clicking login) -->
+        <div id="authModal" class="card hidden">
+            <div id="loginForm">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="loginEmail" placeholder="user@example.com" onkeypress="handleLoginKeypress(event)">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" placeholder="Your password" onkeypress="handleLoginKeypress(event)">
+                </div>
+                <div class="button-group">
+                    <button onclick="login()">Login</button>
+                    <button class="secondary" onclick="hideAuthModal()">Cancel</button>
+                </div>
+            </div>
+
+            <div id="errorMessage" class="error hidden"></div>
+        </div>
+
+        <!-- Activities Section (shown when logged in) -->
+        <div id="activitiesSection" class="card hidden">
+            <!-- Date Range Filter -->
+            <div class="date-range">
+                <div class="form-group">
+                    <label>Begin Date</label>
+                    <input type="date" id="beginDate" onchange="onDateRangeChange()">
+                </div>
+                <div class="form-group">
+                    <label>End Date</label>
+                    <input type="date" id="endDate" onchange="onDateRangeChange()">
+                </div>
+            </div>
+
+            <!-- Create Activity Form -->
+            <div id="createActivityForm">
+                <button id="showCreateFormBtn" onclick="toggleCreateForm()">Create</button>
+                <div id="createFormFields" class="hidden">
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" id="activityDate">
+                    </div>
+                    <div class="form-group">
+                        <label>Distance</label>
+                        <input type="number" id="activityDistance" step="0.01" placeholder="10.5">
+                    </div>
+                    <div class="form-group">
+                        <label>Duration (HH:MM:SS)</label>
+                        <input type="text" id="activityDuration" placeholder="01:23:45" pattern="^([0-9]{2}):([0-5][0-9]):([0-5][0-9])$">
+                    </div>
+                    <div class="form-group">
+                        <label>Comments (optional)</label>
+                        <textarea id="activityComments" placeholder="Notes about this activity..."></textarea>
+                    </div>
+                    <div class="button-group">
+                        <button onclick="createActivity()">Submit</button>
+                        <button class="secondary" onclick="cancelCreateForm()">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activities List -->
+            <div id="activitiesList" class="activities-list"></div>
+
+            <!-- Totals Display -->
+            <div id="totalsBox" class="totals-box hidden">
+                <div class="totals-grid">
+                    <div class="total-item">
+                        <div class="total-label">Activities</div>
+                        <div class="total-value" id="totalCount">0</div>
+                    </div>
+                    <div class="total-item">
+                        <div class="total-label">Distance</div>
+                        <div class="total-value" id="totalDistance">0</div>
+                    </div>
+                    <div class="total-item">
+                        <div class="total-label">Time</div>
+                        <div class="total-value" id="totalDuration">00:00:00</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Construct base URL based on current location
+        const baseUrl = window.location.pathname.startsWith('/activities')
+            ? window.location.origin + '/activities'
+            : window.location.origin;
+        const pb = new PocketBase(baseUrl);
+
+        // Get current week (Monday to Sunday)
+        function getCurrentWeek() {
+            const now = new Date();
+            const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+            const monday = new Date(now);
+            monday.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+
+            return {
+                start: monday.toISOString().split('T')[0], // YYYY-MM-DD
+                end: sunday.toISOString().split('T')[0]
+            };
+        }
+
+        // Load date range from localStorage or use current week
+        function loadDateRange() {
+            const saved = localStorage.getItem('activityDateRange');
+            if (saved) {
+                return JSON.parse(saved);
+            } else {
+                return getCurrentWeek();
+            }
+        }
+
+        // Save date range to localStorage
+        function saveDateRange(start, end) {
+            localStorage.setItem('activityDateRange', JSON.stringify({ start, end }));
+        }
+
+        // Initialize date range inputs
+        function initDateRange() {
+            const range = loadDateRange();
+            document.getElementById('beginDate').value = range.start;
+            document.getElementById('endDate').value = range.end;
+        }
+
+        // Handle date range change
+        function onDateRangeChange() {
+            const start = document.getElementById('beginDate').value;
+            const end = document.getElementById('endDate').value;
+            saveDateRange(start, end);
+            loadActivities();
+        }
+
+        // Check if user is already logged in
+        function init() {
+            if (pb.authStore.isValid) {
+                showLoggedInUI();
+            } else {
+                showLoggedOutUI();
+            }
+            initDateRange();
+            loadActivities();
+            if (pb.authStore.isValid) {
+                subscribeToRealtimeUpdates();
+            }
+        }
+
+        function showLoginModal() {
+            document.getElementById('authModal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('loginEmail').focus(), 100);
+        }
+
+        function hideAuthModal() {
+            document.getElementById('authModal').classList.add('hidden');
+            hideError();
+        }
+
+        function handleLoginKeypress(event) {
+            if (event.key === 'Enter') {
+                login();
+            }
+        }
+
+        async function login() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                await pb.collection('users').authWithPassword(email, password);
+                hideAuthModal();
+                showLoggedInUI();
+                initDateRange();
+                loadActivities();
+                subscribeToRealtimeUpdates();
+                hideError();
+            } catch (error) {
+                showError('Invalid email or password');
+            }
+        }
+
+        function logout() {
+            pb.authStore.clear();
+            location.reload(); // Reload to clear state
+        }
+
+        function showLoggedInUI() {
+            document.getElementById('navLoggedOut').classList.add('hidden');
+            document.getElementById('navLoggedIn').classList.remove('hidden');
+            document.getElementById('navUserEmail').textContent = pb.authStore.model.email;
+            document.getElementById('activitiesSection').classList.remove('hidden');
+            // Show create button when logged in
+            document.getElementById('showCreateFormBtn').classList.remove('hidden');
+        }
+
+        function showLoggedOutUI() {
+            document.getElementById('navLoggedOut').classList.remove('hidden');
+            document.getElementById('navLoggedIn').classList.add('hidden');
+            document.getElementById('activitiesSection').classList.remove('hidden');
+            // Hide create button when logged out
+            document.getElementById('showCreateFormBtn').classList.add('hidden');
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.classList.remove('hidden');
+        }
+
+        function hideError() {
+            document.getElementById('errorMessage').classList.add('hidden');
+        }
+
+        function toggleCreateForm() {
+            document.getElementById('showCreateFormBtn').classList.add('hidden');
+            document.getElementById('createFormFields').classList.remove('hidden');
+            // Set default date to today
+            document.getElementById('activityDate').value = new Date().toISOString().split('T')[0];
+            setTimeout(() => document.getElementById('activityDate').focus(), 100);
+        }
+
+        function cancelCreateForm() {
+            document.getElementById('createFormFields').classList.add('hidden');
+            document.getElementById('showCreateFormBtn').classList.remove('hidden');
+            // Clear form
+            document.getElementById('activityDate').value = '';
+            document.getElementById('activityDistance').value = '';
+            document.getElementById('activityDuration').value = '';
+            document.getElementById('activityComments').value = '';
+        }
+
+        async function createActivity() {
+            const date = document.getElementById('activityDate').value;
+            const distance = document.getElementById('activityDistance').value;
+            const duration = document.getElementById('activityDuration').value;
+            const comments = document.getElementById('activityComments').value;
+
+            if (!date) {
+                alert('Please enter a date');
+                return;
+            }
+            if (!distance) {
+                alert('Please enter a distance');
+                return;
+            }
+            if (!duration) {
+                alert('Please enter a duration');
+                return;
+            }
+            // Validate duration format
+            const durationPattern = /^([0-9]{2}):([0-5][0-9]):([0-5][0-9])$/;
+            if (!durationPattern.test(duration)) {
+                alert('Duration must be in HH:MM:SS format (e.g., 01:23:45)');
+                return;
+            }
+
+            try {
+                await pb.collection('activities').create({
+                    date,
+                    distance: parseFloat(distance),
+                    duration,
+                    comments: comments || '',
+                    user: pb.authStore.model.id
+                });
+
+                cancelCreateForm();
+                loadActivities();
+            } catch (error) {
+                alert('Error creating activity: ' + error.message);
+            }
+        }
+
+        async function loadActivities() {
+            const start = document.getElementById('beginDate').value;
+            const end = document.getElementById('endDate').value;
+
+            // Add one day to end date to ensure inclusive comparison
+            const endDate = new Date(end);
+            endDate.setDate(endDate.getDate() + 1);
+            const endPlusOne = endDate.toISOString().split('T')[0];
+
+            try {
+                // Fetch all activities using getFullList (no pagination limit)
+                const activities = await pb.collection('activities').getFullList({
+                    filter: `date >= "${start}" && date < "${endPlusOne}"`,
+                    sort: '-date'
+                });
+
+                const MAX_DISPLAY = 31;
+
+                if (activities.length > MAX_DISPLAY) {
+                    // Too many activities - show message instead of list
+                    document.getElementById('activitiesList').innerHTML =
+                        `<p style="color: #666; padding: 20px; text-align: center; background: #f5f5f5; border-radius: 4px;">
+                            ${activities.length} activities in this date range (showing totals only)
+                        </p>`;
+                } else {
+                    // Display activities normally
+                    displayActivities(activities);
+                }
+
+                calculateTotals(activities);
+            } catch (error) {
+                console.error('Error loading activities:', error);
+                document.getElementById('activitiesList').innerHTML =
+                    `<div style="color: #c33; padding: 20px; background: #fee; border-radius: 8px;">Error loading activities: ${error.message}</div>`;
+            }
+        }
+
+        function displayActivities(activities) {
+            const activitiesList = document.getElementById('activitiesList');
+
+            if (activities.length === 0) {
+                activitiesList.innerHTML = '<p style="color: #999; padding: 20px; text-align: center;">No activities in this date range</p>';
+                return;
+            }
+
+            activitiesList.innerHTML = activities.map(activity => {
+                const date = new Date(activity.date);
+                const dayNames = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+                const dayOfWeek = dayNames[date.getDay()];
+                // Extract just YYYY-MM-DD from the date
+                const dateOnly = activity.date.split(' ')[0].split('T')[0];
+                const formattedDate = `${dateOnly} (${dayOfWeek})`;
+
+                // Check if user is logged in and owns this activity
+                const canEdit = pb.authStore.isValid && activity.user === pb.authStore.model.id;
+
+                return `
+                    <div class="activity-item" id="activity-${activity.id}">
+                        <div id="view-${activity.id}">
+                            <div class="activity-header">
+                                <span class="activity-date">${formattedDate}</span>
+                                <span class="activity-date">${activity.distance} &nbsp;&nbsp;&nbsp; ${activity.duration}</span>
+                            </div>
+                            ${activity.comments ? `<div class="activity-comments">${escapeHtml(activity.comments)}</div>` : ''}
+                            ${canEdit ? `
+                                <div class="activity-actions">
+                                    <button class="secondary" onclick="editActivity('${activity.id}')">Edit</button>
+                                    <button class="danger" onclick="deleteActivity('${activity.id}')">Delete</button>
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div id="edit-${activity.id}" class="hidden">
+                            <div class="form-group">
+                                <label>Date</label>
+                                <input type="date" id="edit-date-${activity.id}" value="${dateOnly}">
+                            </div>
+                            <div class="form-group">
+                                <label>Distance</label>
+                                <input type="number" id="edit-distance-${activity.id}" step="0.01" value="${activity.distance}">
+                            </div>
+                            <div class="form-group">
+                                <label>Duration (HH:MM:SS)</label>
+                                <input type="text" id="edit-duration-${activity.id}" value="${activity.duration}">
+                            </div>
+                            <div class="form-group">
+                                <label>Comments</label>
+                                <textarea id="edit-comments-${activity.id}">${escapeHtml(activity.comments || '')}</textarea>
+                            </div>
+                            <div class="activity-actions">
+                                <button onclick="saveActivity('${activity.id}')">Save</button>
+                                <button class="secondary" onclick="cancelEdit('${activity.id}')">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function editActivity(id) {
+            document.getElementById(`view-${id}`).classList.add('hidden');
+            document.getElementById(`edit-${id}`).classList.remove('hidden');
+        }
+
+        function cancelEdit(id) {
+            document.getElementById(`edit-${id}`).classList.add('hidden');
+            document.getElementById(`view-${id}`).classList.remove('hidden');
+        }
+
+        async function saveActivity(id) {
+            const date = document.getElementById(`edit-date-${id}`).value;
+            const distance = document.getElementById(`edit-distance-${id}`).value;
+            const duration = document.getElementById(`edit-duration-${id}`).value;
+            const comments = document.getElementById(`edit-comments-${id}`).value;
+
+            if (!date || !distance || !duration) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            const durationPattern = /^([0-9]{2}):([0-5][0-9]):([0-5][0-9])$/;
+            if (!durationPattern.test(duration)) {
+                alert('Duration must be in HH:MM:SS format');
+                return;
+            }
+
+            try {
+                await pb.collection('activities').update(id, {
+                    date,
+                    distance: parseFloat(distance),
+                    duration,
+                    comments
+                });
+
+                cancelEdit(id);
+                loadActivities();
+            } catch (error) {
+                alert('Error updating activity: ' + error.message);
+            }
+        }
+
+        async function deleteActivity(id) {
+            if (!confirm('Are you sure you want to delete this activity?')) {
+                return;
+            }
+
+            try {
+                await pb.collection('activities').delete(id);
+                loadActivities();
+            } catch (error) {
+                alert('Error deleting activity: ' + error.message);
+            }
+        }
+
+        // Convert HH:MM:SS to seconds
+        function durationToSeconds(duration) {
+            const [hours, minutes, seconds] = duration.split(':').map(Number);
+            return hours * 3600 + minutes * 60 + seconds;
+        }
+
+        // Convert seconds back to HH:MM:SS
+        function secondsToDuration(totalSeconds) {
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        function calculateTotals(activities) {
+            const totalsBox = document.getElementById('totalsBox');
+
+            if (activities.length === 0) {
+                totalsBox.classList.add('hidden');
+                return;
+            }
+
+            let totalDistance = 0;
+            let totalSeconds = 0;
+
+            activities.forEach(activity => {
+                totalDistance += activity.distance;
+                totalSeconds += durationToSeconds(activity.duration);
+            });
+
+            document.getElementById('totalCount').textContent = activities.length;
+            document.getElementById('totalDistance').textContent = totalDistance.toFixed(2);
+            document.getElementById('totalDuration').textContent = secondsToDuration(totalSeconds);
+
+            totalsBox.classList.remove('hidden');
+        }
+
+        function subscribeToRealtimeUpdates() {
+            pb.collection('activities').subscribe('*', function (e) {
+                console.log('Real-time update:', e.action);
+                loadActivities();
+            });
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Initialize app
+        init();
+    </script>
+</body>
+</html>
