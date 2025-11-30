@@ -639,7 +639,8 @@
             const endPlusOne = endDate.toISOString().split('T')[0];
 
             try {
-                // Fetch all activities using getFullList (no pagination limit)
+                // Fetch activities using getFullList (no pagination limit)
+                // Note: API rules handle filtering - when logged out shows all, when logged in shows only user's
                 const activities = await pb.collection('activities').getFullList({
                     filter: `date >= "${start}" && date < "${endPlusOne}"`,
                     sort: '-date'
@@ -675,11 +676,13 @@
             }
 
             activitiesList.innerHTML = activities.map(activity => {
-                const date = new Date(activity.date);
-                const dayNames = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
-                const dayOfWeek = dayNames[date.getDay()];
                 // Extract just YYYY-MM-DD from the date
                 const dateOnly = activity.date.split(' ')[0].split('T')[0];
+                // Parse as local date to avoid timezone issues
+                const [year, month, day] = dateOnly.split('-').map(Number);
+                const date = new Date(year, month - 1, day);
+                const dayNames = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+                const dayOfWeek = dayNames[date.getDay()];
                 const formattedDate = `${dateOnly} (${dayOfWeek})`;
 
                 // Check if user is logged in and owns this activity

@@ -29,6 +29,12 @@ A minimalist activity tracking web application built on PocketBase for logging d
 
 Visit [robertvigil.com/activities](https://robertvigil.com/activities) to see it in action.
 
+**Test Account:**
+- Email: `test@example.com`
+- Password: `password123`
+
+*Note: Test account data older than 24 hours is automatically deleted when the test user logs in.*
+
 ## Quick Start
 
 ### 1. Download PocketBase
