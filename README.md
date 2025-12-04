@@ -7,6 +7,7 @@ A minimalist activity tracking web application built on PocketBase for logging d
 ## Features
 
 - **Date Range Filtering** - Always-active date range that persists across sessions (defaults to current week)
+- **Comments Search** - Filter activities by comment text with multi-word AND matching (e.g., "rainy yale" finds activities containing both words)
 - **Smart Display** - Shows individual activities (≤31) or totals only (>31) to handle large date ranges efficiently
 - **Real-time Updates** - Live synchronization when activities are added, edited, or deleted
 - **Public & Private Views** - Public read-only access for all users, authenticated CRUD for logged-in users
@@ -112,6 +113,12 @@ Find your IP: `hostname -I` or `ip addr show`
   - ≤31 activities: Shows full list with details + totals
   - >31 activities: Shows count message + totals only
 - **Rationale:** Prevents UI overload when querying large date ranges (e.g., "all time")
+
+### Comments Search
+- Case-insensitive wildcard matching on comments field
+- **Multi-word AND search:** Enter multiple words separated by spaces to find activities containing ALL words
+  - Example: "rainy yale" matches "took a rainy ride on yale street" and "rode down yale, it was rainy"
+- Search updates instantly as you type
 
 ### Public vs. Authenticated Views
 

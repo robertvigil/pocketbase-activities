@@ -494,11 +494,17 @@
             localStorage.setItem('activityDateRange', JSON.stringify({ start, end }));
         }
 
-        // Initialize date range inputs
+        // Initialize date range inputs and search field
         function initDateRange() {
             const range = loadDateRange();
             document.getElementById('beginDate').value = range.start;
             document.getElementById('endDate').value = range.end;
+
+            // Restore saved search value
+            const savedSearch = localStorage.getItem('activitySearchComments');
+            if (savedSearch) {
+                document.getElementById('searchComments').value = savedSearch;
+            }
         }
 
         // Handle date range change
@@ -511,6 +517,8 @@
 
         // Handle search change
         function onSearchChange() {
+            const searchComments = document.getElementById('searchComments').value;
+            localStorage.setItem('activitySearchComments', searchComments);
             loadActivities();
         }
 
@@ -665,8 +673,12 @@
             // Build filter with date range and optional comment search
             let filter = `date >= "${start}" && date < "${endPlusOne}"`;
             if (searchComments) {
-                // Use ~ for case-insensitive wildcard search
-                filter += ` && comments ~ "${searchComments}"`;
+                // Split by whitespace and filter out empty strings
+                // Each term is ANDed together for multi-word search
+                const searchTerms = searchComments.split(/\s+/).filter(term => term.length > 0);
+                searchTerms.forEach(term => {
+                    filter += ` && comments ~ "${term}"`;
+                });
             }
 
             try {
