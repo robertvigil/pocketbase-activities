@@ -28,7 +28,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
+            margin-bottom: 15px;
         }
 
         .navbar h1 {
@@ -161,13 +161,23 @@
             border-radius: 4px;
             margin-bottom: 20px;
             display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .date-range .date-row {
+            display: flex;
             gap: 15px;
             align-items: flex-end;
         }
 
-        .date-range .form-group {
+        .date-range .date-row .form-group {
             margin-bottom: 0;
             flex: 1;
+        }
+
+        .date-range .search-row {
+            margin-bottom: 0;
         }
 
         .activities-list {
@@ -291,12 +301,15 @@
             }
 
             .date-range {
-                flex-direction: column;
                 gap: 10px;
-                align-items: stretch;
             }
 
-            .date-range .form-group {
+            .date-range .date-row {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .date-range .date-row .form-group {
                 width: 100%;
             }
 
@@ -378,13 +391,18 @@
         <div id="activitiesSection" class="card hidden">
             <!-- Date Range Filter -->
             <div class="date-range">
-                <div class="form-group">
-                    <label>Begin Date</label>
-                    <input type="date" id="beginDate" onchange="onDateRangeChange()">
+                <div class="date-row">
+                    <div class="form-group">
+                        <label>Begin Date</label>
+                        <input type="date" id="beginDate" onchange="onDateRangeChange()">
+                    </div>
+                    <div class="form-group">
+                        <label>End Date</label>
+                        <input type="date" id="endDate" onchange="onDateRangeChange()">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>End Date</label>
-                    <input type="date" id="endDate" onchange="onDateRangeChange()">
+                <div class="form-group search-row">
+                    <input type="text" id="searchComments" placeholder="Search comments..." oninput="onSearchChange()">
                 </div>
             </div>
 
@@ -488,6 +506,11 @@
             const start = document.getElementById('beginDate').value;
             const end = document.getElementById('endDate').value;
             saveDateRange(start, end);
+            loadActivities();
+        }
+
+        // Handle search change
+        function onSearchChange() {
             loadActivities();
         }
 
@@ -632,17 +655,25 @@
         async function loadActivities() {
             const start = document.getElementById('beginDate').value;
             const end = document.getElementById('endDate').value;
+            const searchComments = document.getElementById('searchComments').value.trim();
 
             // Add one day to end date to ensure inclusive comparison
             const endDate = new Date(end);
             endDate.setDate(endDate.getDate() + 1);
             const endPlusOne = endDate.toISOString().split('T')[0];
 
+            // Build filter with date range and optional comment search
+            let filter = `date >= "${start}" && date < "${endPlusOne}"`;
+            if (searchComments) {
+                // Use ~ for case-insensitive wildcard search
+                filter += ` && comments ~ "${searchComments}"`;
+            }
+
             try {
                 // Fetch activities using getFullList (no pagination limit)
                 // Note: API rules handle filtering - when logged out shows all, when logged in shows only user's
                 const activities = await pb.collection('activities').getFullList({
-                    filter: `date >= "${start}" && date < "${endPlusOne}"`,
+                    filter: filter,
                     sort: '-date'
                 });
 
